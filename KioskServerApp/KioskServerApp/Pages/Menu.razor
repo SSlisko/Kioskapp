@@ -1,0 +1,68 @@
+﻿@page "/menu"
+@using MongoDB.Driver
+@inject MongoDBService MongoDBService
+
+<h3>Menu</h3>
+
+@if (isLoading)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+}
+else if (categories == null || categories.Count == 0)
+{
+    <p>No categories found.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var category in categories)
+        {
+            @foreach (var product in category.Products)
+            {
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">@product.Name</h5>
+                            <p class="card-text">Price: @product.Price</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+}
+
+@code {
+    private List<Category> categories;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("OnInitializedAsync started.");
+        try
+        {
+            var categoryCollection = MongoDBService.GetCategoryCollection();
+            categories = await categoryCollection.Find(Builders<Category>.Filter.Empty).ToListAsync();
+
+            // Debug output
+            if (categories != null && categories.Count > 0)
+            {
+                Console.WriteLine($"Fetched {categories.Count} categories.");
+            }
+            else
+            {
+                Console.WriteLine("No categories fetched.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching categories: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
